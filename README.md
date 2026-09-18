@@ -9,12 +9,12 @@ The runner works in any CI system that can run Node.js 20 or later. Vendor-speci
 Use an exact package version in protected automation:
 
 ```sh
-npx --yes @modernedi/configuration-runner@0.5.0 plan \
+npx --yes @modernedi/configuration-runner@0.5.1 plan \
   --bundle ./modernedi \
   --plan-out ./artifacts/plan.json
 ```
 
-The package depends on the exact `@modernedi/sdk@0.8.0` API contract, including shared public certificate files, scenario bindings for Production or Test traffic, and optional generated-X12 checks for saved mapping cases.
+The package depends on the exact `@modernedi/sdk@0.8.1` API contract, including shared public certificate files, scenario bindings for Production or Test traffic, and optional generated-X12 checks for saved mapping cases.
 
 Set these environment variables through your CI secret store:
 
@@ -44,7 +44,7 @@ ModernEDI remains authoritative for document shape, mapping compilation, semanti
 Run with a read-capable key on a proposed bundle:
 
 ```sh
-npx --yes @modernedi/configuration-runner@0.5.0 plan \
+npx --yes @modernedi/configuration-runner@0.5.1 plan \
   --bundle ./modernedi \
   --plan-out ./artifacts/plan.json
 ```
@@ -62,7 +62,7 @@ An outgoing case can set `validateX12: true` to check its generated document aga
 After reviewing a plan, execute its saved cases on ModernEDI's server:
 
 ```sh
-npx --yes @modernedi/configuration-runner@0.5.0 verify \
+npx --yes @modernedi/configuration-runner@0.5.1 verify \
   --bundle ./modernedi \
   --reviewed-plan ./artifacts/plan.json \
   --request-id 43c4a774-911c-47b6-a9f5-5bf2cde68157 \
@@ -86,7 +86,7 @@ Download the reviewed `plan.json`, check out the exact protected revision, and s
 ```sh
 export MODERNEDI_IDEMPOTENCY_KEY="production:configuration:build-1842"
 
-npx --yes @modernedi/configuration-runner@0.5.0 apply-reviewed \
+npx --yes @modernedi/configuration-runner@0.5.1 apply-reviewed \
   --bundle ./modernedi \
   --reviewed-plan ./artifacts/plan.json \
   --result-out ./artifacts/result.json \
@@ -108,7 +108,7 @@ As soon as the server accepts the apply, `result.json` is written atomically wit
 Use the stored result artifact and a read-capable key:
 
 ```sh
-npx --yes @modernedi/configuration-runner@0.5.0 wait \
+npx --yes @modernedi/configuration-runner@0.5.1 wait \
   --result ./artifacts/result.json \
   --timeout-seconds 900
 ```
@@ -151,5 +151,7 @@ and regenerated. The public source is exported as a reviewed snapshot, without
 private application code, generators, deployment credentials, or Git history.
 PUBLIC_SOURCE.json records the source revision and exported file hashes.
 
-Publishing npm packages is a separate, protected maintainer operation. The CI
-workflow in this repository only builds, tests, and checks package contents.
+Publishing is a separate, manually dispatched maintainer workflow protected by
+the npm-production environment. Normal CI never publishes. A release requires an
+exact reviewed commit, version, and recent upstream verification, then verifies
+the installed tarball and registry integrity. See the workflow in this repository.

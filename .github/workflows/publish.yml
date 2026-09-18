@@ -1,0 +1,56 @@
+name: Publish package
+run-name: Publish ${{ inputs.version }} from ${{ inputs.source_sha }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Exact package version
+        required: true
+        type: string
+      source_sha:
+        description: Exact reviewed public main commit
+        required: true
+        type: string
+      source_revision:
+        description: Exact verified upstream source revision
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: ${{ github.repository == 'modernedi/configuration-runner' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: npm-production
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.source_sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Check reviewed source and upstream verification before installing dependencies
+        env:
+          EXPECTED_VERSION: ${{ inputs.version }}
+          EXPECTED_SOURCE_SHA: ${{ inputs.source_sha }}
+          EXPECTED_SOURCE_REVISION: ${{ inputs.source_revision }}
+        run: |
+          node scripts/verify-public-source.mjs
+          node scripts/check-release-source.mjs
+      - run: npm install --global npm@12.0.2
+      - run: npm ci --ignore-scripts --registry https://registry.npmjs.org/
+      - name: Verify, pack, publish, and install the exact registry package
+        env:
+          EXPECTED_VERSION: ${{ inputs.version }}
+        run: node scripts/release-configuration-runner.mjs --expected-version "$EXPECTED_VERSION"
