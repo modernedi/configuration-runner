@@ -1,0 +1,22 @@
+{
+  "apiVersion": "modernedi.com/v1",
+  "kind": "IntegrationConfiguration",
+  "resources": [
+    {
+      "kind": "Mapping",
+      "key": "8ccf76f0-2701-4d4c-a5c4-94a453feec81",
+      "path": "mappings/8ccf76f0-2701-4d4c-a5c4-94a453feec81/mapping.json",
+      "contentSha256": "c9a48de81469100544cb21ef55325507d1630a41c41b55be119961447da4704e"
+    }
+  ],
+  "files": [
+    {
+      "path": "mappings/8ccf76f0-2701-4d4c-a5c4-94a453feec81/source.x12mapper",
+      "contentSha256": "ecc5fc42d2694020c361c74cc5cd011a0dd03816b040c9b86004ef169baa9d9d"
+    },
+    {
+      "path": "mappings/8ccf76f0-2701-4d4c-a5c4-94a453feec81/mapping.json",
+      "contentSha256": "c9a48de81469100544cb21ef55325507d1630a41c41b55be119961447da4704e"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "apiVersion": "modernedi.com/v1",
+  "kind": "Mapping",
+  "metadata": {
+    "key": "8ccf76f0-2701-4d4c-a5c4-94a453feec81"
+  },
+  "spec": {
+    "transform": {
+      "sourcePath": "mappings/8ccf76f0-2701-4d4c-a5c4-94a453feec81/source.x12mapper"
+    }
+  }
+}

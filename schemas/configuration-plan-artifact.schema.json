@@ -1,0 +1,446 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.modernedi.com/schemas/configuration-runner/v1/configuration-plan-artifact.schema.json",
+  "title": "ModernEDI Configuration Plan Artifact",
+  "description": "Deterministic review artifact emitted by @modernedi/configuration-runner.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "apiVersion",
+    "kind",
+    "desiredBundleSha256",
+    "planSha256",
+    "plan"
+  ],
+  "properties": {
+    "apiVersion": {
+      "const": "modernedi.com/configuration-runner/v1"
+    },
+    "kind": {
+      "const": "ConfigurationPlanArtifact"
+    },
+    "desiredBundleSha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "planSha256": {
+      "$ref": "#/$defs/nullableSha256"
+    },
+    "plan": {
+      "$ref": "#/$defs/plan"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "nullableSha256": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/sha256"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "etag": {
+      "type": "string",
+      "pattern": "^\"[0-9a-f]{64}\"$"
+    },
+    "resourceKind": {
+      "type": "string",
+      "enum": [
+        "As2Connection",
+        "Partner",
+        "Mapping",
+        "ScenarioDefinition",
+        "ScenarioBinding"
+      ]
+    },
+    "action": {
+      "type": "string",
+      "enum": [
+        "CREATE",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "create",
+        "update",
+        "delete",
+        "unchanged"
+      ],
+      "properties": {
+        "create": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "update": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "delete": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unchanged": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "validationContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "syntaxTreeCatalogRevision",
+        "syntaxTreeCatalogManifestSha256"
+      ],
+      "properties": {
+        "syntaxTreeCatalogRevision": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "syntaxTreeCatalogManifestSha256": {
+          "$ref": "#/$defs/nullableSha256"
+        },
+        "scenarioAuthorityEtag": {
+          "$ref": "#/$defs/etag"
+        }
+      }
+    },
+    "currentValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "resourceId",
+        "contentSha256",
+        "apiEtag"
+      ],
+      "properties": {
+        "resourceId": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "contentSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "apiEtag": {
+          "$ref": "#/$defs/etag"
+        }
+      }
+    },
+    "desiredValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contentSha256"
+      ],
+      "properties": {
+        "contentSha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "operation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action",
+        "kind",
+        "key",
+        "path"
+      ],
+      "properties": {
+        "action": {
+          "$ref": "#/$defs/action"
+        },
+        "kind": {
+          "$ref": "#/$defs/resourceKind"
+        },
+        "key": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "current": {
+          "$ref": "#/$defs/currentValue"
+        },
+        "desired": {
+          "$ref": "#/$defs/desiredValue"
+        }
+      }
+    },
+    "resourceIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "key"
+      ],
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/resourceKind"
+        },
+        "key": {
+          "type": "string",
+          "format": "uuid"
+        }
+      }
+    },
+    "diagnostic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "severity",
+        "code",
+        "message",
+        "pointer"
+      ],
+      "properties": {
+        "severity": {
+          "type": "string",
+          "enum": [
+            "ERROR",
+            "WARNING"
+          ]
+        },
+        "code": {
+          "type": "string",
+          "minLength": 1
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        },
+        "pointer": {
+          "type": "string"
+        },
+        "filePath": {
+          "type": "string"
+        },
+        "resource": {
+          "$ref": "#/$defs/resourceIdentity"
+        },
+        "line": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "column": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "scenarioResource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "key",
+        "action"
+      ],
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/resourceKind"
+        },
+        "key": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "action": {
+          "$ref": "#/$defs/action"
+        }
+      }
+    },
+    "scenarioDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "namespace",
+        "key",
+        "version"
+      ],
+      "properties": {
+        "namespace": {
+          "type": "string"
+        },
+        "key": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      }
+    },
+    "affectedScenario": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bindingId",
+        "revision",
+        "name",
+        "environment",
+        "definition",
+        "effect",
+        "resources"
+      ],
+      "properties": {
+        "bindingId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "environment": {
+          "type": "string",
+          "enum": [
+            "production",
+            "test"
+          ]
+        },
+        "definition": {
+          "$ref": "#/$defs/scenarioDefinition"
+        },
+        "effect": {
+          "enum": [
+            "REAPPLY_REQUIRED",
+            "REAPPLIED_BY_APPLY",
+            "RETIRED_BY_APPLY"
+          ]
+        },
+        "resources": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/scenarioResource"
+          }
+        }
+      }
+    },
+    "affectedRun": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runId",
+        "bindingId",
+        "bindingRevision",
+        "effect",
+        "resources"
+      ],
+      "properties": {
+        "runId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "bindingId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "bindingRevision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "effect": {
+          "const": "CANCEL_OR_COMPLETE_REQUIRED"
+        },
+        "resources": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/scenarioResource"
+          }
+        }
+      }
+    },
+    "plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "success",
+        "applicable",
+        "desiredBundleSha256",
+        "currentSnapshotEtag",
+        "runtimeConfigurationRevision",
+        "validationContext",
+        "planSha256",
+        "summary",
+        "operations",
+        "diagnostics",
+        "scenarioImpactComplete",
+        "affectedScenarios",
+        "affectedRuns"
+      ],
+      "properties": {
+        "success": {
+          "const": true
+        },
+        "applicable": {
+          "type": "boolean"
+        },
+        "desiredBundleSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "currentSnapshotEtag": {
+          "$ref": "#/$defs/etag"
+        },
+        "runtimeConfigurationRevision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "validationContext": {
+          "$ref": "#/$defs/validationContext"
+        },
+        "planSha256": {
+          "$ref": "#/$defs/nullableSha256"
+        },
+        "summary": {
+          "$ref": "#/$defs/summary"
+        },
+        "operations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/operation"
+          }
+        },
+        "diagnostics": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/diagnostic"
+          }
+        },
+        "scenarioImpactComplete": {
+          "type": "boolean"
+        },
+        "affectedScenarios": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/affectedScenario"
+          }
+        },
+        "affectedRuns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/affectedRun"
+          }
+        }
+      }
+    }
+  }
+}

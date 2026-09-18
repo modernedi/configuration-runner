@@ -1,0 +1,78 @@
+{
+  "files": [
+    {
+      "path": "_state/snapshot.json",
+      "role": "STATE",
+      "format": "JSON",
+      "mediaType": "application/json",
+      "contentSha256": "41e0beb711cf83eb7c849b8aef48c5e35ea428645d357a3a2a731936f7000b38",
+      "content": {
+        "apiVersion": "modernedi.com/v1",
+        "kind": "IntegrationConfigurationSnapshot",
+        "runtimeConfigurationRevision": 42,
+        "bundleSha256": "d5501d66cac6c3217149a92a41c8c7a801c81e764214c85c23bcd03cb20b6260",
+        "resources": []
+      }
+    },
+    {
+      "path": "modernedi.json",
+      "role": "MANIFEST",
+      "format": "JSON",
+      "mediaType": "application/json",
+      "contentSha256": "a30d5aec541aaf45f50cf7f1922f8f169ada0c62b94f3ae44dec0c31f97bf401",
+      "content": {
+        "apiVersion": "modernedi.com/v1",
+        "kind": "IntegrationConfiguration",
+        "resources": [
+          {
+            "kind": "Partner",
+            "key": "2fa59493-6678-426f-a6d9-a4c32dac19e1",
+            "path": "partners/2fa59493-6678-426f-a6d9-a4c32dac19e1/partner.json",
+            "contentSha256": "e603822785badbf68cb7977ad8e57b7efc7fc16e3a216244796b3ac3d6808064"
+          }
+        ],
+        "files": [
+          {
+            "path": "partners/2fa59493-6678-426f-a6d9-a4c32dac19e1/partner.json",
+            "contentSha256": "e603822785badbf68cb7977ad8e57b7efc7fc16e3a216244796b3ac3d6808064"
+          }
+        ]
+      }
+    },
+    {
+      "path": "partners/2fa59493-6678-426f-a6d9-a4c32dac19e1/partner.json",
+      "role": "RESOURCE",
+      "format": "JSON",
+      "mediaType": "application/json",
+      "contentSha256": "e603822785badbf68cb7977ad8e57b7efc7fc16e3a216244796b3ac3d6808064",
+      "content": {
+        "apiVersion": "modernedi.com/v1",
+        "kind": "Partner",
+        "metadata": {
+          "key": "2fa59493-6678-426f-a6d9-a4c32dac19e1"
+        },
+        "spec": {
+          "name": "Example Retailer",
+          "as2ConnectionKey": null,
+          "x12": {
+            "production": {
+              "isaQualifier": "ZZ",
+              "isaId": "EXAMPLERETAILER",
+              "gsId": "EXAMPLERETAILER"
+            },
+            "test": null
+          },
+          "ediSupportEmail": "edi@example-retailer.test",
+          "carbonCopyOnly": false,
+          "implementationAcknowledgmentEnabled": true,
+          "unmappedInboundPolicy": "MAPPED_ONLY",
+          "signingCertificateSlot": "active",
+          "supportsNewlineAfterSegmentTerminator": false,
+          "overrideUserAgentString": null,
+          "overrideSeparatorSet": null,
+          "messageTypeGsVersionOverrides": {}
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "success": true,
+  "configurationApplyOperationId": "apply-3ee360bd-7e41-4c55-80f8-3f1e5839804d",
+  "appliedSnapshotEtag": "\"41e0beb711cf83eb7c849b8aef48c5e35ea428645d357a3a2a731936f7000b38\"",
+  "selection": {
+    "definition": {
+      "namespace": "example.orders",
+      "key": "order-invoice",
+      "version": "1",
+      "contentSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    "environment": "test",
+    "binding": {
+      "id": "order-invoice-test",
+      "revision": 3,
+      "contentSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    "parameters": {}
+  }
+}

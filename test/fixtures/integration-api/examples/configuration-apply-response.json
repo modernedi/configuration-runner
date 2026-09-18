@@ -1,0 +1,40 @@
+{
+  "success": true,
+  "operation": {
+    "operationId": "apply-3ee360bd-7e41-4c55-80f8-3f1e5839804d",
+    "changedBy": {
+      "type": "API_KEY",
+      "label": "Production deployment"
+    },
+    "status": "SUCCEEDED",
+    "desiredBundleSha256": "a30d5aec541aaf45f50cf7f1922f8f169ada0c62b94f3ae44dec0c31f97bf401",
+    "planSha256": "b9c9eb985ce73affb13467d70f994ab4b8f161c3ff7a5a708be0a317ce8d69fd",
+    "baseSnapshotEtag": "\"41e0beb711cf83eb7c849b8aef48c5e35ea428645d357a3a2a731936f7000b38\"",
+    "appliedSnapshotEtag": "\"7cc459ae46afc5c86879660f7f6710cd38b01544c3ac4bb30fb01f72130ab351\"",
+    "runtimeConfigurationRevision": 43,
+    "summary": {
+      "create": 1,
+      "update": 0,
+      "delete": 0,
+      "unchanged": 0
+    },
+    "operations": [
+      {
+        "action": "CREATE",
+        "kind": "Partner",
+        "key": "2fa59493-6678-426f-a6d9-a4c32dac19e1",
+        "path": "partners/2fa59493-6678-426f-a6d9-a4c32dac19e1/partner.json",
+        "desired": {
+          "contentSha256": "e603822785badbf68cb7977ad8e57b7efc7fc16e3a216244796b3ac3d6808064"
+        }
+      }
+    ],
+    "runtimePublication": {
+      "state": "published",
+      "retrying": false
+    },
+    "requestedAt": "2026-08-30T17:24:00.000000000Z",
+    "committedAt": "2026-08-30T17:24:00.100000000Z",
+    "completedAt": "2026-08-30T17:24:00.200000000Z"
+  }
+}

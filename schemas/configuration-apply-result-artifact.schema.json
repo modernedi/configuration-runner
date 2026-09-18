@@ -1,0 +1,218 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.modernedi.com/schemas/configuration-runner/v1/configuration-apply-result-artifact.schema.json",
+  "title": "ModernEDI Configuration Apply Result Artifact",
+  "description": "Deterministic result artifact emitted by @modernedi/configuration-runner after a reviewed apply.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "apiVersion",
+    "kind",
+    "reviewed",
+    "idempotencyReplayed",
+    "workspaceUrl",
+    "operation"
+  ],
+  "properties": {
+    "apiVersion": {
+      "const": "modernedi.com/configuration-runner/v1"
+    },
+    "kind": {
+      "const": "ConfigurationApplyResultArtifact"
+    },
+    "reviewed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "desiredBundleSha256",
+        "planSha256"
+      ],
+      "properties": {
+        "desiredBundleSha256": {
+          "$ref": "configuration-plan-artifact.schema.json#/$defs/sha256"
+        },
+        "planSha256": {
+          "$ref": "configuration-plan-artifact.schema.json#/$defs/sha256"
+        }
+      }
+    },
+    "idempotencyReplayed": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "workspaceUrl": {
+      "type": "string",
+      "format": "uri"
+    },
+    "operation": {
+      "$ref": "#/$defs/applyOperation"
+    }
+  },
+  "$defs": {
+    "runtimePublication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "retrying"
+      ],
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": [
+            "published",
+            "pending",
+            "not_provisioned"
+          ]
+        },
+        "retrying": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "applyOperation": {
+      "type": "object",
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "PENDING"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "completedAt": {
+                "type": "null"
+              },
+              "runtimePublication": {
+                "properties": {
+                  "state": {
+                    "const": "pending"
+                  },
+                  "retrying": {
+                    "const": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "SUCCEEDED"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "completedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "runtimePublication": {
+                "properties": {
+                  "state": {
+                    "enum": [
+                      "published",
+                      "not_provisioned"
+                    ]
+                  },
+                  "retrying": {
+                    "const": false
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "required": [
+        "operationId",
+        "status",
+        "desiredBundleSha256",
+        "planSha256",
+        "baseSnapshotEtag",
+        "appliedSnapshotEtag",
+        "runtimeConfigurationRevision",
+        "summary",
+        "operations",
+        "runtimePublication",
+        "requestedAt",
+        "committedAt",
+        "completedAt"
+      ],
+      "properties": {
+        "operationId": {
+          "type": "string",
+          "pattern": "^apply-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "SUCCEEDED"
+          ]
+        },
+        "desiredBundleSha256": {
+          "$ref": "configuration-plan-artifact.schema.json#/$defs/sha256"
+        },
+        "planSha256": {
+          "$ref": "configuration-plan-artifact.schema.json#/$defs/sha256"
+        },
+        "baseSnapshotEtag": {
+          "$ref": "configuration-plan-artifact.schema.json#/$defs/etag"
+        },
+        "appliedSnapshotEtag": {
+          "$ref": "configuration-plan-artifact.schema.json#/$defs/etag"
+        },
+        "runtimeConfigurationRevision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "summary": {
+          "$ref": "configuration-plan-artifact.schema.json#/$defs/summary"
+        },
+        "operations": {
+          "type": "array",
+          "items": {
+            "$ref": "configuration-plan-artifact.schema.json#/$defs/operation"
+          }
+        },
+        "runtimePublication": {
+          "$ref": "#/$defs/runtimePublication"
+        },
+        "requestedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "committedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "completedAt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}

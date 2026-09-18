@@ -1,0 +1,47 @@
+{
+  "success": true,
+  "run": {
+    "runId": "verify-11111111-1111-4111-8111-111111111111",
+    "status": "PASSED",
+    "createdAt": "2026-09-08T00:00:00Z",
+    "completedAt": "2026-09-08T00:00:01Z",
+    "appliedOperationId": null,
+    "freshness": "CURRENT",
+    "staleReasons": [],
+    "identity": {
+      "planSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "desiredBundleSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "baseSnapshotEtag": "\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"",
+      "evaluatorSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "mappings": [
+        {
+          "mappingResourceKey": "11111111-1111-4111-8111-111111111111",
+          "candidateSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "casesSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "caseCount": 1,
+          "syntaxTree": {
+            "x12Version": "4010",
+            "transactionSetIdentifierCode": "850",
+            "schemaVersion": 1,
+            "catalogRevision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "manifestSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "syntaxTreeSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        }
+      ],
+      "caseCount": 1,
+      "untestedMappingCount": 2
+    },
+    "cases": [
+      {
+        "mappingResourceKey": "11111111-1111-4111-8111-111111111111",
+        "id": "order",
+        "name": "Synthetic order example",
+        "status": "PASSED",
+        "caseSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "expectedOutputSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "actualOutputSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    ]
+  }
+}

@@ -1,0 +1,304 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.modernedi.com/integration-api/configuration-verification-result.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "description": "One server verification run.",
+  "required": [
+    "success",
+    "run"
+  ],
+  "properties": {
+    "success": {
+      "type": "boolean",
+      "enum": [
+        true
+      ]
+    },
+    "run": {
+      "$ref": "#/$defs/ConfigurationVerificationRun"
+    }
+  },
+  "$defs": {
+    "ConfigurationVerificationRun": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Durable bounded suite. Results expire after 90 days; only the most recent 200 workspace runs are retained. Freshness is checked on reads.",
+      "required": [
+        "runId",
+        "status",
+        "createdAt",
+        "completedAt",
+        "appliedOperationId",
+        "identity",
+        "cases",
+        "freshness",
+        "staleReasons"
+      ],
+      "properties": {
+        "runId": {
+          "$ref": "#/$defs/ConfigurationVerificationRunId"
+        },
+        "status": {
+          "type": "string",
+          "description": "PASSED covers only selected saved cases; it does not establish delivery, partner acceptance or scenario success.",
+          "enum": [
+            "RUNNING",
+            "PASSED",
+            "FAILED",
+            "ERROR",
+            "CANCELLED",
+            "TIMED_OUT"
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Server admission time.",
+          "format": "date-time"
+        },
+        "completedAt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Server completion time; null while running.",
+          "format": "date-time"
+        },
+        "appliedOperationId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Apply operation explicitly linked to this result, or null."
+        },
+        "identity": {
+          "$ref": "#/$defs/ConfigurationVerificationIdentity"
+        },
+        "cases": {
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "$ref": "#/$defs/ConfigurationVerificationCaseResult"
+          },
+          "description": "Completed case outcomes. Incomplete suites cannot pass."
+        },
+        "freshness": {
+          "type": "string",
+          "description": "Whether current workspace, evaluator and catalog still match this result.",
+          "enum": [
+            "CURRENT",
+            "STALE"
+          ]
+        },
+        "staleReasons": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "description": "Reason evidence is no longer current.",
+            "enum": [
+              "EVALUATOR_CHANGED",
+              "SYNTAX_TREE_CHANGED",
+              "CONFIGURATION_CHANGED",
+              "DEPENDENCIES_UNAVAILABLE"
+            ]
+          },
+          "description": "Empty only when current."
+        }
+      }
+    },
+    "ConfigurationVerificationRunId": {
+      "type": "string",
+      "description": "Server-owned verification run identity.",
+      "pattern": "^verify-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "ConfigurationVerificationIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Server-derived identity of the reviewed configuration and evaluator, not tenant-runtime execution evidence.",
+      "required": [
+        "planSha256",
+        "desiredBundleSha256",
+        "baseSnapshotEtag",
+        "evaluatorSha256",
+        "mappings",
+        "untestedMappingCount",
+        "caseCount"
+      ],
+      "properties": {
+        "planSha256": {
+          "$ref": "#/$defs/ConfigurationSha256"
+        },
+        "desiredBundleSha256": {
+          "$ref": "#/$defs/ConfigurationSha256"
+        },
+        "baseSnapshotEtag": {
+          "type": "string",
+          "description": "Exact workspace snapshot used to plan."
+        },
+        "evaluatorSha256": {
+          "$ref": "#/$defs/ConfigurationSha256"
+        },
+        "mappings": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 25,
+          "items": {
+            "$ref": "#/$defs/ConfigurationVerificationMapping"
+          },
+          "description": "All desired mappings containing saved cases, sorted by resource key."
+        },
+        "untestedMappingCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Desired mappings without saved cases. A passing suite does not cover these mappings."
+        },
+        "caseCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Total selected saved cases, including cases not reached before cancellation or timeout."
+        }
+      }
+    },
+    "ConfigurationSha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "Lowercase hexadecimal SHA-256 digest.",
+      "example": "30d7e671476880c8d357370bf9a7c21fc59f55d2435073e92763f61d1c72f749"
+    },
+    "ConfigurationVerificationMapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Identity and coverage of one tested mapping.",
+      "required": [
+        "mappingResourceKey",
+        "candidateSha256",
+        "casesSha256",
+        "caseCount",
+        "syntaxTree"
+      ],
+      "properties": {
+        "mappingResourceKey": {
+          "type": "string",
+          "description": "Stable portable Mapping resource key.",
+          "format": "uuid"
+        },
+        "candidateSha256": {
+          "$ref": "#/$defs/ConfigurationSha256"
+        },
+        "casesSha256": {
+          "$ref": "#/$defs/ConfigurationSha256"
+        },
+        "caseCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "description": "Number of saved cases selected for this mapping."
+        },
+        "syntaxTree": {
+          "$ref": "#/$defs/ConfigurationVerificationSyntaxTree"
+        }
+      }
+    },
+    "ConfigurationVerificationSyntaxTree": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Exact stored X12 grammar and catalog frozen for this mapping.",
+      "required": [
+        "schemaVersion",
+        "x12Version",
+        "transactionSetIdentifierCode",
+        "catalogRevision",
+        "manifestSha256",
+        "syntaxTreeSha256"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "type": "integer",
+          "enum": [
+            1
+          ],
+          "description": "Syntax-tree catalog identity format."
+        },
+        "x12Version": {
+          "type": "string",
+          "description": "X12 release of the stored grammar."
+        },
+        "transactionSetIdentifierCode": {
+          "type": "string",
+          "description": "X12 transaction set of the stored grammar."
+        },
+        "catalogRevision": {
+          "$ref": "#/$defs/ConfigurationSha256"
+        },
+        "manifestSha256": {
+          "$ref": "#/$defs/ConfigurationSha256"
+        },
+        "syntaxTreeSha256": {
+          "$ref": "#/$defs/ConfigurationSha256"
+        }
+      }
+    },
+    "ConfigurationVerificationCaseResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Exact text comparison and optional generated-X12 validation outcome. A case fails if either requested check fails. Raw inputs, outputs and engine diagnostic text are never retained.",
+      "required": [
+        "mappingResourceKey",
+        "id",
+        "name",
+        "status",
+        "caseSha256",
+        "expectedOutputSha256",
+        "actualOutputSha256"
+      ],
+      "properties": {
+        "mappingResourceKey": {
+          "type": "string",
+          "description": "Mapping owning this case.",
+          "format": "uuid"
+        },
+        "id": {
+          "type": "string",
+          "description": "Portable case ID."
+        },
+        "name": {
+          "type": "string",
+          "description": "Portable case display name."
+        },
+        "status": {
+          "type": "string",
+          "description": "Outcome of this executed case.",
+          "enum": [
+            "PASSED",
+            "FAILED",
+            "ERROR"
+          ]
+        },
+        "caseSha256": {
+          "$ref": "#/$defs/ConfigurationSha256"
+        },
+        "expectedOutputSha256": {
+          "$ref": "#/$defs/ConfigurationSha256"
+        },
+        "actualOutputSha256": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "Actual output hash, or null when execution produced no output."
+        },
+        "x12ValidationStatus": {
+          "type": "string",
+          "enum": [
+            "PASSED",
+            "FAILED",
+            "ERROR"
+          ],
+          "description": "Present only when the saved outgoing case requested validateX12. Uses the frozen mapping syntax tree and the same document preparation and validation as outgoing preview/send. A FAILED case may have matching expected/actual hashes when X12 validation failed."
+        }
+      }
+    }
+  }
+}

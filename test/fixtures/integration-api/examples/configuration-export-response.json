@@ -1,0 +1,253 @@
+{
+  "success": true,
+  "bundleSha256": "72b172cdd195c0cfbf2a5b086667029b62e29876effb666ade411fd3a1092e05",
+  "snapshotSha256": "46f74ef312a4271f386470d7d35b275a86332335eb536358d47121966accab51",
+  "snapshotEtag": "\"46f74ef312a4271f386470d7d35b275a86332335eb536358d47121966accab51\"",
+  "files": [
+    {
+      "path": "_state/snapshot.json",
+      "role": "STATE",
+      "format": "JSON",
+      "mediaType": "application/json",
+      "contentSha256": "46f74ef312a4271f386470d7d35b275a86332335eb536358d47121966accab51",
+      "content": {
+        "apiVersion": "modernedi.com/v1",
+        "kind": "IntegrationConfigurationSnapshot",
+        "runtimeConfigurationRevision": 42,
+        "bundleSha256": "72b172cdd195c0cfbf2a5b086667029b62e29876effb666ade411fd3a1092e05",
+        "resources": [
+          {
+            "kind": "As2Connection",
+            "key": "9d7e1e0c-1e98-4b44-a579-bf08d2642979",
+            "resourceId": 12,
+            "contentSha256": "aa2dd601db9d9955abc655ea308436808f2bf30c489915adcf7f31b091529f9e",
+            "apiEtag": "\"5555555555555555555555555555555555555555555555555555555555555555\""
+          },
+          {
+            "kind": "Mapping",
+            "key": "8ccf76f0-2701-4d4c-a5c4-94a453feec81",
+            "resourceId": 31,
+            "contentSha256": "91d55d498eb24dfa63b1ca8a6d1b145aba67ae25564fd67a0e55f07e063604da",
+            "apiEtag": "\"7777777777777777777777777777777777777777777777777777777777777777\""
+          },
+          {
+            "kind": "Partner",
+            "key": "61c5a052-9f83-49e9-a858-e7ddbc56a514",
+            "resourceId": 24,
+            "contentSha256": "7ca661ff2acdea62b05783ab13e831f66e29d1da22b783d017fa2f9dd594a85c",
+            "apiEtag": "\"6666666666666666666666666666666666666666666666666666666666666666\""
+          }
+        ]
+      }
+    },
+    {
+      "path": "as2-connections/9d7e1e0c-1e98-4b44-a579-bf08d2642979/connection.json",
+      "role": "RESOURCE",
+      "format": "JSON",
+      "mediaType": "application/json",
+      "contentSha256": "aa2dd601db9d9955abc655ea308436808f2bf30c489915adcf7f31b091529f9e",
+      "content": {
+        "apiVersion": "modernedi.com/v1",
+        "kind": "As2Connection",
+        "metadata": {
+          "key": "9d7e1e0c-1e98-4b44-a579-bf08d2642979"
+        },
+        "spec": {
+          "environments": {
+            "production": {
+              "as2Identifier": "RETAILER_PROD",
+              "endpointUrl": "https://as2.retailer.example/receive",
+              "publicCertificatePem": "-----BEGIN CERTIFICATE-----\nMIIB...partner-public-certificate...\n-----END CERTIFICATE-----",
+              "requireSignature": true,
+              "requireEncryption": true
+            },
+            "test": null
+          },
+          "outbound": {
+            "signingAlgorithm": "SHA256WITHRSA",
+            "encryptionAlgorithm": "AES256_CBC",
+            "compressionAlgorithm": "ZLIB",
+            "micAlgorithm": "SHA_256",
+            "micAlgorithmFormat": "RFC_3851"
+          },
+          "functionalAcknowledgment": {
+            "messageStructure": "SIGNED_ENCRYPTED"
+          },
+          "mdn": {
+            "encrypt": false,
+            "forceSynchronousForErrors": true
+          },
+          "cmsAlgorithmProtection": false,
+          "digestCanonicalizationPolicy": "AUTO"
+        }
+      }
+    },
+    {
+      "path": "mappings/8ccf76f0-2701-4d4c-a5c4-94a453feec81/mapping.json",
+      "role": "RESOURCE",
+      "format": "JSON",
+      "mediaType": "application/json",
+      "contentSha256": "91d55d498eb24dfa63b1ca8a6d1b145aba67ae25564fd67a0e55f07e063604da",
+      "content": {
+        "apiVersion": "modernedi.com/v1",
+        "kind": "Mapping",
+        "metadata": {
+          "key": "8ccf76f0-2701-4d4c-a5c4-94a453feec81"
+        },
+        "spec": {
+          "partnerKey": "61c5a052-9f83-49e9-a858-e7ddbc56a514",
+          "direction": "INCOMING",
+          "x12Version": "4010",
+          "functionalIdentifierCode": "PO",
+          "transactionSetIdentifierCode": "850",
+          "transform": {
+            "type": "X12_MAPPER",
+            "fileName": "purchase-order.x12mapper",
+            "sourcePath": "mappings/8ccf76f0-2701-4d4c-a5c4-94a453feec81/source.x12mapper",
+            "sourceSha256": "798ac1925490d1da0c7c2c2f06f0de055540abb58ed1ad73e3c3df0cb5103291"
+          },
+          "output": {
+            "contentType": "application/json",
+            "purpose": "PROCESSING",
+            "delivery": "TRANSACTION_RECORD"
+          },
+          "businessKey": {
+            "name": "purchaseOrderNumber",
+            "extractor": "ST->BEG(03)"
+          },
+          "deliveredMetadata": {
+            "partner": true,
+            "transactionTimestamp": true,
+            "transactionSet": true,
+            "transactionControlNumber": true,
+            "functionalGroupControlNumber": true,
+            "x12Version": true,
+            "functionalIdentifierCode": true,
+            "segmentTerminator": true,
+            "mappingSourceHash": true
+          },
+          "runtime": {
+            "activeAttributes": {
+              "customer": true,
+              "messageId": true,
+              "timestamp": true,
+              "elementSeparator": true,
+              "subElementSeparator": true,
+              "segmentTerminator": true,
+              "repetitionSeparator": true,
+              "transactionX12": true,
+              "transactionIdentifier": true,
+              "functionalGroupX12": true,
+              "interchangeX12": true,
+              "x12AgencyCode": true,
+              "x12VersionStr": true,
+              "functionalGroupType": true,
+              "functionalGroupControlNumber": true,
+              "transactionGroupType": true,
+              "senderIdQualifier": true,
+              "senderId": true,
+              "gsSenderId": true,
+              "gsVersionStr": true,
+              "usageIndicator": true,
+              "userAgent": true,
+              "mapFileSha256Hash": true,
+              "testMessage": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "path": "mappings/8ccf76f0-2701-4d4c-a5c4-94a453feec81/source.x12mapper",
+      "role": "SOURCE",
+      "format": "TEXT",
+      "mediaType": "text/plain; charset=utf-8",
+      "contentSha256": "798ac1925490d1da0c7c2c2f06f0de055540abb58ed1ad73e3c3df0cb5103291",
+      "content": "let poNumber = ST->BEG(03)\n{purchaseOrderNumber: poNumber}\n"
+    },
+    {
+      "path": "modernedi.json",
+      "role": "MANIFEST",
+      "format": "JSON",
+      "mediaType": "application/json",
+      "contentSha256": "72b172cdd195c0cfbf2a5b086667029b62e29876effb666ade411fd3a1092e05",
+      "content": {
+        "apiVersion": "modernedi.com/v1",
+        "kind": "IntegrationConfiguration",
+        "resources": [
+          {
+            "kind": "As2Connection",
+            "key": "9d7e1e0c-1e98-4b44-a579-bf08d2642979",
+            "path": "as2-connections/9d7e1e0c-1e98-4b44-a579-bf08d2642979/connection.json",
+            "contentSha256": "aa2dd601db9d9955abc655ea308436808f2bf30c489915adcf7f31b091529f9e"
+          },
+          {
+            "kind": "Mapping",
+            "key": "8ccf76f0-2701-4d4c-a5c4-94a453feec81",
+            "path": "mappings/8ccf76f0-2701-4d4c-a5c4-94a453feec81/mapping.json",
+            "contentSha256": "91d55d498eb24dfa63b1ca8a6d1b145aba67ae25564fd67a0e55f07e063604da"
+          },
+          {
+            "kind": "Partner",
+            "key": "61c5a052-9f83-49e9-a858-e7ddbc56a514",
+            "path": "partners/61c5a052-9f83-49e9-a858-e7ddbc56a514/partner.json",
+            "contentSha256": "7ca661ff2acdea62b05783ab13e831f66e29d1da22b783d017fa2f9dd594a85c"
+          }
+        ],
+        "files": [
+          {
+            "path": "as2-connections/9d7e1e0c-1e98-4b44-a579-bf08d2642979/connection.json",
+            "contentSha256": "aa2dd601db9d9955abc655ea308436808f2bf30c489915adcf7f31b091529f9e"
+          },
+          {
+            "path": "mappings/8ccf76f0-2701-4d4c-a5c4-94a453feec81/mapping.json",
+            "contentSha256": "91d55d498eb24dfa63b1ca8a6d1b145aba67ae25564fd67a0e55f07e063604da"
+          },
+          {
+            "path": "mappings/8ccf76f0-2701-4d4c-a5c4-94a453feec81/source.x12mapper",
+            "contentSha256": "798ac1925490d1da0c7c2c2f06f0de055540abb58ed1ad73e3c3df0cb5103291"
+          },
+          {
+            "path": "partners/61c5a052-9f83-49e9-a858-e7ddbc56a514/partner.json",
+            "contentSha256": "7ca661ff2acdea62b05783ab13e831f66e29d1da22b783d017fa2f9dd594a85c"
+          }
+        ]
+      }
+    },
+    {
+      "path": "partners/61c5a052-9f83-49e9-a858-e7ddbc56a514/partner.json",
+      "role": "RESOURCE",
+      "format": "JSON",
+      "mediaType": "application/json",
+      "contentSha256": "7ca661ff2acdea62b05783ab13e831f66e29d1da22b783d017fa2f9dd594a85c",
+      "content": {
+        "apiVersion": "modernedi.com/v1",
+        "kind": "Partner",
+        "metadata": {
+          "key": "61c5a052-9f83-49e9-a858-e7ddbc56a514"
+        },
+        "spec": {
+          "name": "Example Retailer",
+          "as2ConnectionKey": "9d7e1e0c-1e98-4b44-a579-bf08d2642979",
+          "x12": {
+            "production": {
+              "isaQualifier": "ZZ",
+              "isaId": "RETAILER",
+              "gsId": "RETAILER"
+            },
+            "test": null
+          },
+          "ediSupportEmail": "edi@example-retailer.test",
+          "carbonCopyOnly": false,
+          "implementationAcknowledgmentEnabled": true,
+          "unmappedInboundPolicy": "MAPPED_ONLY",
+          "signingCertificateSlot": "active",
+          "supportsNewlineAfterSegmentTerminator": false,
+          "overrideUserAgentString": null,
+          "overrideSeparatorSet": null,
+          "messageTypeGsVersionOverrides": {}
+        }
+      }
+    }
+  ]
+}

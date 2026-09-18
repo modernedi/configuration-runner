@@ -1,0 +1,56 @@
+{
+  "name": "@modernedi/configuration-runner",
+  "version": "0.5.0",
+  "description": "Vendor-neutral CI runner for reviewed ModernEDI configuration plans",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/modernedi/configuration-runner.git"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "modernedi-configuration": "./dist/main.js"
+  },
+  "files": [
+    "dist",
+    "schemas",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "scripts": {
+    "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
+    "build": "npm run clean && tsc -p tsconfig.json",
+    "test": "npm run build && node --test test/*.test.mjs",
+    "verify:dependency-contract": "node ./scripts/verify-dependency-contract.mjs",
+    "verify": "node scripts/verify-public-source.mjs && npm run verify:dependency-contract && npm test && npm pack --dry-run --ignore-scripts",
+    "prepack": "npm run build",
+    "prepublishOnly": "npm run verify"
+  },
+  "dependencies": {
+    "@modernedi/sdk": "0.8.0"
+  },
+  "devDependencies": {
+    "@types/node": "20.19.43",
+    "typescript": "^7.0.2"
+  },
+  "bugs": {
+    "url": "https://github.com/modernedi/configuration-runner/issues"
+  },
+  "homepage": "https://www.modernedi.com/docs/configuration-in-git"
+}
