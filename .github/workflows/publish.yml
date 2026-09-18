@@ -32,6 +32,10 @@ jobs:
     timeout-minutes: 30
     environment: npm-production
     steps:
+      - name: Require the reviewed main commit before checkout
+        env:
+          EXPECTED_SOURCE_SHA: ${{ inputs.source_sha }}
+        run: test "$GITHUB_SHA" = "$EXPECTED_SOURCE_SHA"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.source_sha }}

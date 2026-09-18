@@ -3,12 +3,12 @@
   "repository": "modernedi/configuration-runner",
   "package": "@modernedi/configuration-runner",
   "version": "0.5.1",
-  "sourceRevision": "cdb6064094bf6f424ec4df2540e6b1a514d2927d",
+  "sourceRevision": "3fa0b8e00245cb47a32578a9711b4a06e1038641",
   "verification": {
     "version": 1,
     "scope": "configuration-runner",
-    "revision": "cdb6064094bf6f424ec4df2540e6b1a514d2927d",
-    "verifiedAt": "2026-09-18T06:50:59.377Z",
+    "revision": "3fa0b8e00245cb47a32578a9711b4a06e1038641",
+    "verifiedAt": "2026-09-18T06:55:20.019Z",
     "commands": [
       "Configuration runner publication contracts",
       "Configuration runner contract and package"
@@ -17,7 +17,7 @@
   "files": {
     ".gitattributes": "d60f352d0db1404c70afb4bb8b2ca3fd1c610572aa40720e8a0b7baa7885418c",
     ".github/workflows/ci.yml": "11b5926c6b7ff0f8950dc5e397848b1749189f771c2e13426d96770d25cd0b0c",
-    ".github/workflows/publish.yml": "81c031d564bc4b2d019d7d7d9d66e7c5cd9eeee9141a07427da9caa874b4a537",
+    ".github/workflows/publish.yml": "4d3dd9628486ffc1c2b80cb322f8426dab4737171a9219681549a50bbbe2ac66",
     ".gitignore": "3087facec39632340883ca6d8dc3e15cb8dc14c85b220244dc6c3ae71e3f3284",
     "LICENSE": "5094a2bea463604e98f133a5ab9dcda14202a7652c803825993922a44bb9cf9c",
     "package-lock.json": "821ca07c21d91a41a1bdf6092fc7e9cbd22663a58cca9b6827c1ebee2ff831f9",
