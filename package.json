@@ -1,6 +1,6 @@
 {
   "name": "@modernedi/configuration-runner",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "description": "Vendor-neutral CI runner for reviewed ModernEDI configuration plans",
   "license": "Apache-2.0",
   "repository": {
@@ -43,7 +43,7 @@
     "prepublishOnly": "npm run verify"
   },
   "dependencies": {
-    "@modernedi/sdk": "0.8.2"
+    "@modernedi/sdk": "0.9.0"
   },
   "devDependencies": {
     "@types/node": "20.19.43",

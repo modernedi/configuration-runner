@@ -10,7 +10,7 @@ assert.deepEqual(packageJson.bin, {
 });
 assert.equal(
   packageJson.dependencies?.["@modernedi/sdk"],
-  "0.8.2",
+  "0.9.0",
   "the runner must require the SDK preserving shared public certificate files, hashed mapping cases, optional X12 validation, scenario traffic environments, and contract-aware safe retries",
 );
 assert.deepEqual(packageJson.repository, {
