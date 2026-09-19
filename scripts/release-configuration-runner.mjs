@@ -15,7 +15,7 @@ import {
 const PROVISION_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PACKAGE_DIRECTORY = PROVISION_ROOT;
 const PACKAGE_NAME = '@modernedi/configuration-runner';
-const SDK_VERSION = '0.8.1';
+const SDK_VERSION = '0.8.2';
 const REGISTRY = 'https://registry.npmjs.org/';
 const REPOSITORY = 'git+https://github.com/modernedi/configuration-runner.git';
 const WORKFLOW_REF =

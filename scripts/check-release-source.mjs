@@ -1,8 +1,21 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+export function readReleasePackage(root = '.') {
+  const read = name => readFileSync(path.join(root, name), 'utf8');
+  if (existsSync(path.join(root, 'pyproject.toml'))) {
+    const project = read('pyproject.toml').split('[project]')[1]?.split('\n[')[0] ?? '';
+    return { name: /^name = "([^"]+)"/m.exec(project)?.[1], version: /^version = "([^"]+)"/m.exec(project)?.[1] };
+  }
+  if (existsSync(path.join(root, 'src/ModernEdi/ModernEdi.csproj'))) {
+    const project = read('src/ModernEdi/ModernEdi.csproj');
+    return { name: /<PackageId>([^<]+)<\/PackageId>/.exec(project)?.[1], version: /<Version>([^<]+)<\/Version>/.exec(project)?.[1] };
+  }
+  return JSON.parse(read('package.json'));
+}
 
 export function assertReviewedPublicSource({ manifest, pkg, environment, head, now = Date.now() }) {
   const { EXPECTED_VERSION, EXPECTED_SOURCE_SHA, EXPECTED_SOURCE_REVISION } = environment;
@@ -29,7 +42,7 @@ export function assertReviewedPublicSource({ manifest, pkg, environment, head, n
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   assertReviewedPublicSource({
     manifest: JSON.parse(readFileSync('PUBLIC_SOURCE.json', 'utf8')),
-    pkg: JSON.parse(readFileSync('package.json', 'utf8')),
+    pkg: readReleasePackage(),
     environment: process.env,
     head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
   });
