@@ -2,6 +2,7 @@
 
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { assertSdkVersion } from './sdk-contract.mjs';
 
 import {
   compareSemver,
@@ -15,7 +16,6 @@ import {
 const PROVISION_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PACKAGE_DIRECTORY = PROVISION_ROOT;
 const PACKAGE_NAME = '@modernedi/configuration-runner';
-const SDK_VERSION = '0.9.1';
 const REGISTRY = 'https://registry.npmjs.org/';
 const REPOSITORY = 'git+https://github.com/modernedi/configuration-runner.git';
 const WORKFLOW_REF =
@@ -54,28 +54,30 @@ function configurationRunnerProfile() {
       process.stdout.write(`[release:configuration-runner] ${redactSecrets(message)}\n`);
     },
     npmClientOptions: runnerNpmClientOptions(),
-    plan(packageSpec) {
+    plan(packageSpec, manifest) {
+      const sdkVersion = assertSdkVersion(manifest.dependencies?.['@modernedi/sdk']);
       return [
-        `require a registry-backed lockfile with exact @modernedi/sdk@${SDK_VERSION}`,
+        `require a registry-backed lockfile with exact @modernedi/sdk@${sdkVersion}`,
         `verify, pack, and smoke-test exact ${packageSpec}`,
         `if ${PACKAGE_NAME} is absent, complete the reviewed prerelease bootstrap before automation`,
         'publish stable versions from the canonical protected Trusted Publishing workflow',
         'verify immutable registry integrity and smoke-test the exact registry version',
       ];
     },
-    async verifyPrerequisites({ npm, packageLock }) {
+    async verifyPrerequisites({ npm, packageLock, manifest }) {
+      const sdkVersion = assertSdkVersion(manifest.dependencies?.['@modernedi/sdk']);
       const lockedSdk = packageLock.packages['node_modules/@modernedi/sdk'];
-      const registrySdk = await npm.lookupVersion('@modernedi/sdk', SDK_VERSION);
+      const registrySdk = await npm.lookupVersion('@modernedi/sdk', sdkVersion);
       if (!registrySdk) {
-        throw new Error(`Public @modernedi/sdk@${SDK_VERSION} must be published first.`);
+        throw new Error(`Public @modernedi/sdk@${sdkVersion} must be published first.`);
       }
       if (registrySdk.integrity !== lockedSdk.integrity) {
         throw new Error(
-          `The lockfile does not pin public @modernedi/sdk@${SDK_VERSION} integrity. `
+          `The lockfile does not pin public @modernedi/sdk@${sdkVersion} integrity. `
           + `Regenerate it against ${REGISTRY}.`,
         );
       }
-      return { sdk: { version: SDK_VERSION, integrity: registrySdk.integrity } };
+      return { sdk: { version: sdkVersion, integrity: registrySdk.integrity } };
     },
     handleMissingPackage({ options, manifest, packed, prerequisiteResult }) {
       if (!options.dryRun) return undefined;
@@ -126,9 +128,7 @@ function assertReleaseManifest(manifest) {
     throw new Error(`Automated publication accepts stable versions only, not ${manifest.version}.`);
   }
   if (manifest.private === true) throw new Error(`${PACKAGE_NAME} is marked private.`);
-  if (manifest.dependencies?.['@modernedi/sdk'] !== SDK_VERSION) {
-    throw new Error(`${PACKAGE_NAME} must depend on exact @modernedi/sdk@${SDK_VERSION}.`);
-  }
+  assertSdkVersion(manifest.dependencies?.['@modernedi/sdk']);
   if (
     manifest.repository?.type !== 'git'
     || manifest.repository?.url !== REPOSITORY
@@ -150,6 +150,7 @@ function assertReleaseManifest(manifest) {
 }
 
 function assertRegistryBackedPackageLock(packageLock, manifest) {
+  const sdkVersion = assertSdkVersion(manifest.dependencies?.['@modernedi/sdk']);
   const root = packageLock?.packages?.[''];
   const sdk = packageLock?.packages?.['node_modules/@modernedi/sdk'];
   const problems = [];
@@ -158,8 +159,8 @@ function assertRegistryBackedPackageLock(packageLock, manifest) {
   if (packageLock?.version !== manifest.version || root?.version !== manifest.version) {
     problems.push('package version mismatch');
   }
-  if (root?.dependencies?.['@modernedi/sdk'] !== SDK_VERSION || sdk?.version !== SDK_VERSION) {
-    problems.push(`SDK dependency must be exact ${SDK_VERSION}`);
+  if (root?.dependencies?.['@modernedi/sdk'] !== sdkVersion || sdk?.version !== sdkVersion) {
+    problems.push(`SDK dependency must be exact ${sdkVersion}`);
   }
   for (const field of ['dependencies', 'devDependencies']) {
     if (JSON.stringify(root?.[field] ?? {}) !== JSON.stringify(manifest?.[field] ?? {})) {
@@ -177,7 +178,7 @@ function assertRegistryBackedPackageLock(packageLock, manifest) {
   if (problems.length > 0) {
     throw new Error(
       `Configuration runner package-lock.json is not clean and registry-backed: ${problems.join('; ')}. `
-      + `Publish @modernedi/sdk@${SDK_VERSION}, remove repository links, then regenerate with npm install.`,
+      + `Publish @modernedi/sdk@${sdkVersion}, remove repository links, then regenerate with npm install.`,
     );
   }
 }

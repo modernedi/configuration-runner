@@ -3,13 +3,14 @@
   "repository": "modernedi/configuration-runner",
   "package": "@modernedi/configuration-runner",
   "version": "0.5.4",
-  "sourceRevision": "d0df53c829128557f9f8da90ee9a0211e8e4d896",
+  "sourceRevision": "45e2283b94c11cc9d00715fdf7b7284975f29009",
   "verification": {
     "version": 1,
     "scope": "configuration-runner",
-    "revision": "d0df53c829128557f9f8da90ee9a0211e8e4d896",
-    "verifiedAt": "2026-09-20T09:07:06.608Z",
+    "revision": "45e2283b94c11cc9d00715fdf7b7284975f29009",
+    "verifiedAt": "2026-09-20T11:30:26.754Z",
     "commands": [
+      "Committed package release references",
       "Configuration runner publication contracts",
       "Configuration runner contract and package"
     ]
@@ -28,8 +29,9 @@
     "schemas/configuration-verification-result.schema.json": "b3e46c9119f1f0cfd9372dfb1feec5dc821fc7a515f1ef297474787d5f1916f7",
     "scripts/check-release-source.mjs": "06118dc177e70f8298902940c5bc4e1c45a7956292aa92340fb152d8d0fca8bc",
     "scripts/npm-package-release.mjs": "b01464bdcb6bf86bb07eab118875f07d36273a3797bac23daa5c30198a205004",
-    "scripts/release-configuration-runner.mjs": "b9ebc0b9090e08038faa5c69cda4c2a9bfa9bc178987a9a93ba75482fb419d86",
-    "scripts/verify-dependency-contract.mjs": "d61c26e8422068e869a134bcf66016aff522d21dd286544769baa179fa105ed1",
+    "scripts/release-configuration-runner.mjs": "ad83dfe545177a22083bc33a7e4723e903863fd078f58bebcafe5d1a2d3798db",
+    "scripts/sdk-contract.mjs": "835d771ee4a5778e14124d1573e2911f29515260765323073e74e6a10e4c9098",
+    "scripts/verify-dependency-contract.mjs": "e22325beed152dcb0ce61689dcdfe547e935681f30f5d4d5bdf94ed1ea119e11",
     "scripts/verify-public-source.mjs": "229505234d3046dfae5062daab649586e5a5c5055d1cecbc2ad3cfe90f6f04d0",
     "src/artifacts.ts": "930b67e5f18fddd2fa746b08a302d8c71e27e7ec702040aa39d22d1c9dca26ec",
     "src/bundle-directory.ts": "042cb0669d034e1fa26af249ada521d05f8d5c637f75f836d66784814da3c2ff",
