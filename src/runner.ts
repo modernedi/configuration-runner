@@ -94,7 +94,7 @@ export async function applyReviewedConfiguration(
       },
     });
   const metadata = getModernEdiResponseMetadata(submitted.raw);
-  let result = await submitted.value();
+  const result = await submitted.value();
   assertOperationMatchesReviewedPlan(options.reviewedPlan, result);
   const submittedOperationId = result.operation.operationId;
   let artifact = configurationApplyResultArtifact(
@@ -104,7 +104,8 @@ export async function applyReviewedConfiguration(
     options.appUrl,
   );
   await options.onResult?.(artifact);
-  result = await waitForApplyOperation(options.client, result, {
+  await waitForApplyOperation(options.client, submittedOperationId, {
+    initial: result,
     timeoutMs,
     initialPollIntervalMs: retryAfterMilliseconds(metadata.retryAfter),
     now: options.now,
@@ -151,17 +152,8 @@ export async function waitForConfigurationApply(
     );
   }
 
-  let response = await options.client.configurationAsCode
-    .getIntegrationConfigurationApplyOperation({ operationId });
-  assertOperationMatchesStoredResult(options.result, response);
-  let artifact = configurationApplyResultArtifact(
-    options.result.reviewed,
-    response,
-    options.result.idempotencyReplayed,
-    options.appUrl,
-  );
-  await options.onResult?.(artifact);
-  response = await waitForApplyOperation(options.client, response, {
+  let artifact = options.result;
+  await waitForApplyOperation(options.client, operationId, {
     timeoutMs,
     now: options.now,
     sleep: options.sleep,
@@ -218,6 +210,7 @@ async function currentPlan(
 }
 
 interface WaitOptions {
+  initial?: ConfigurationApplyOperationResponse;
   timeoutMs: number;
   initialPollIntervalMs?: number;
   now?: () => number;
@@ -229,7 +222,7 @@ interface WaitOptions {
 
 async function waitForApplyOperation(
   client: ConfigurationRunnerClient,
-  initial: ConfigurationApplyOperationResponse,
+  operationId: string,
   options: WaitOptions,
 ): Promise<ConfigurationApplyOperationResponse> {
   const now = options.now ?? Date.now;
@@ -238,30 +231,26 @@ async function waitForApplyOperation(
   const deadline = startedAt + options.timeoutMs;
   const pollIntervalMs = options.initialPollIntervalMs
     ?? DEFAULT_POLL_INTERVAL_MS;
-  let current = initial;
-  const operationId = initial.operation.operationId;
-
-  while (current.operation.status === "PENDING") {
-    const remaining = deadline - now();
-    if (remaining <= 0) {
+  const remaining = () => {
+    const milliseconds = deadline - now();
+    if (milliseconds <= 0) {
       throw runnerError(
         "APPLY_POLL_TIMEOUT",
-        `Configuration apply ${current.operation.operationId} is still PENDING after ${options.timeoutMs} ms. The database change may already be committed; resume polling this operation instead of submitting another apply.`,
+        `Could not confirm configuration apply ${operationId} completed within ${options.timeoutMs} ms. The database change may already be committed; resume polling this operation instead of submitting another apply.`,
         4,
       );
     }
-    await sleep(Math.min(pollIntervalMs, remaining));
-    current = await client.configurationAsCode
-      .getIntegrationConfigurationApplyOperation({
-        operationId,
-      });
-    if (current.operation.operationId !== operationId) {
-      throw runnerError(
-        "APPLY_OPERATION_IDENTITY_MISMATCH",
-        `ModernEDI returned operation ${current.operation.operationId} while polling ${operationId}.`,
-        4,
-      );
-    }
+    return milliseconds;
+  };
+  // Resuming includes the first read in the same budget as subsequent polls.
+  let current = options.initial;
+  if (current === undefined) {
+    current = await readApplyOperation(client, operationId, remaining);
+    await options.onOperation?.(current);
+  }
+  while (current.operation.status === "PENDING") {
+    await sleep(Math.min(pollIntervalMs, remaining()));
+    current = await readApplyOperation(client, operationId, remaining);
     await options.onOperation?.(current);
   }
 
@@ -272,6 +261,53 @@ async function waitForApplyOperation(
     );
   }
   return current;
+}
+
+async function readApplyOperation(
+  client: ConfigurationRunnerClient,
+  operationId: string,
+  remaining: () => number,
+): Promise<ConfigurationApplyOperationResponse> {
+  const budget = remaining();
+  const controller = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timedOut = new Promise<never>((_resolve, reject) => {
+    const expire = () => {
+      try {
+        // Recheck early timers, and support library budgets beyond Node's timer range.
+        timer = setTimeout(expire, Math.min(remaining(), 2_147_483_647));
+      } catch (error) {
+        controller.abort(error);
+        reject(error);
+      }
+    };
+    timer = setTimeout(expire, Math.min(budget, 2_147_483_647));
+  });
+  try {
+    // The signal also bounds SDK retries and response-body reads. The race prevents
+    // an uncooperative custom transport from keeping the caller waiting indefinitely.
+    const response = await Promise.race([
+      client.configurationAsCode.getIntegrationConfigurationApplyOperation(
+        { operationId }, { signal: controller.signal },
+      ),
+      timedOut,
+    ]);
+    remaining();
+    if (response.operation.operationId !== operationId) {
+      throw runnerError(
+        "APPLY_OPERATION_IDENTITY_MISMATCH",
+        `ModernEDI returned operation ${response.operation.operationId} while polling ${operationId}.`,
+        4,
+      );
+    }
+    return response;
+  } catch (error) {
+    if (controller.signal.aborted) throw controller.signal.reason;
+    remaining();
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 function assertOperationMatchesReviewedPlan(

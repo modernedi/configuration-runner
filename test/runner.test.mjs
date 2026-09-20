@@ -3,6 +3,7 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
+import { ModernEdiClient } from "@modernedi/sdk";
 
 import {
   configurationApplyResultArtifact,
@@ -271,13 +272,17 @@ test("timeout leaves a PENDING artifact that wait resumes and updates to SUCCEED
   try {
     const planned = planResponse();
     let now = 0;
+    let pollCalls = 0;
     const applyingClient = {
       configurationAsCode: {
         planIntegrationConfiguration: async () => planned,
         applyIntegrationConfigurationRaw: async () => rawResponse(applyResponse("PENDING"), {
           "Retry-After": "0.001",
         }),
-        getIntegrationConfigurationApplyOperation: async () => applyResponse("PENDING"),
+        getIntegrationConfigurationApplyOperation: async () => {
+          pollCalls++;
+          return applyResponse("PENDING");
+        },
       },
     };
     await assert.rejects(
@@ -293,6 +298,7 @@ test("timeout leaves a PENDING artifact that wait resumes and updates to SUCCEED
       }),
       (error) => error?.code === "APPLY_POLL_TIMEOUT",
     );
+    assert.equal(pollCalls, 0, "Do not start another request when sleep reaches the deadline");
 
     const pending = await readConfigurationApplyResultArtifact(resultPath);
     assert.equal(pending.operation.status, "PENDING");
@@ -323,6 +329,156 @@ test("timeout leaves a PENDING artifact that wait resumes and updates to SUCCEED
   }
 });
 
+test("wait shares one deadline between its first lookup and later poll delays", async () => {
+  const stored = configurationApplyResultArtifact(configurationPlanArtifact(planResponse()), applyResponse("PENDING"), false);
+  let now = 0;
+  let calls = 0;
+  const sleeps = [];
+  const observed = [];
+  const client = { configurationAsCode: {
+    getIntegrationConfigurationApplyOperation: async () => {
+      calls++;
+      now += 7;
+      return applyResponse("PENDING");
+    },
+  } };
+
+  await assert.rejects(waitForConfigurationApply({
+    client, result: stored, timeoutMs: 10, now: () => now,
+    sleep: async milliseconds => { sleeps.push(milliseconds); now += milliseconds; },
+    onResult: async result => { observed.push(result.operation.status); },
+  }), error => error.code === "APPLY_POLL_TIMEOUT" && error.exitCode === 4);
+  assert.equal(calls, 1);
+  assert.deepEqual(sleeps, [3]);
+  assert.deepEqual(observed, ["PENDING"]);
+});
+
+test("a status response received after the deadline cannot overwrite the saved result", async () => {
+  const stored = configurationApplyResultArtifact(configurationPlanArtifact(planResponse()), applyResponse("PENDING"), false);
+  let now = 0;
+  const observed = [];
+  const client = { configurationAsCode: {
+    getIntegrationConfigurationApplyOperation: async () => {
+      now = 10_000;
+      return applyResponse("SUCCEEDED");
+    },
+  } };
+
+  await assert.rejects(waitForConfigurationApply({
+    client, result: stored, timeoutMs: 10, now: () => now,
+    onResult: async result => { observed.push(result.operation.status); },
+  }), error => error.code === "APPLY_POLL_TIMEOUT");
+  assert.deepEqual(observed, []);
+  assert.equal(stored.operation.status, "PENDING");
+});
+
+for (const status of ["PENDING", "SUCCEEDED"]) {
+  test(`wait aborts a stalled first lookup even with a stored ${status} result`, { timeout: 2000 }, async () => {
+    const stored = configurationApplyResultArtifact(configurationPlanArtifact(planResponse()), applyResponse(status), false);
+    let signal;
+    let calls = 0;
+    const observed = [];
+    const client = { configurationAsCode: {
+      getIntegrationConfigurationApplyOperation: (_input, options) => {
+        calls++;
+        signal = options.signal;
+        return new Promise(() => {});
+      },
+    } };
+
+    await assert.rejects(waitForConfigurationApply({
+      client, result: stored, timeoutMs: 25,
+      onResult: async result => { observed.push(result.operation.status); },
+    }), error => error.code === "APPLY_POLL_TIMEOUT" && error.exitCode === 4);
+    assert.equal(calls, 1);
+    assert.equal(signal.aborted, true);
+    assert.equal(signal.reason.code, "APPLY_POLL_TIMEOUT");
+    assert.deepEqual(observed, []);
+    assert.equal(stored.operation.status, status);
+  });
+}
+
+test("stalled polling preserves PENDING on disk and resumes without applying again", { timeout: 3000 }, async () => {
+  const temporary = await mkdtemp(path.join(os.tmpdir(), "modernedi-runner-stalled-"));
+  const resultPath = path.join(temporary, "result.json");
+  try {
+    let resolvePoll;
+    let signal;
+    let applies = 0;
+    let polls = 0;
+    const observed = [];
+    const onResult = async artifact => {
+      observed.push(artifact.operation.status);
+      await writeArtifact(resultPath, artifact);
+    };
+    const client = { configurationAsCode: {
+      planIntegrationConfiguration: async () => planResponse(),
+      applyIntegrationConfigurationRaw: async () => { applies++; return rawResponse(applyResponse("PENDING")); },
+      getIntegrationConfigurationApplyOperation: (_input, options) => {
+        polls++;
+        signal = options.signal;
+        return new Promise(resolve => { resolvePoll = resolve; });
+      },
+    } };
+    await assert.rejects(applyReviewedConfiguration({
+      client, request: request(), reviewedPlan: configurationPlanArtifact(planResponse()),
+      idempotencyKey: "stalled-poll", timeoutMs: 25, sleep: async () => {}, onResult,
+    }), error => error.code === "APPLY_POLL_TIMEOUT" && error.exitCode === 4);
+    assert.equal(signal.aborted, true);
+    assert.equal(polls, 1);
+    assert.equal((await readConfigurationApplyResultArtifact(resultPath)).operation.status, "PENDING");
+
+    // Even a transport that ignores abort and completes later must not write SUCCEEDED.
+    resolvePoll(applyResponse("SUCCEEDED"));
+    await new Promise(resolve => setImmediate(resolve));
+    assert.deepEqual(observed, ["PENDING"]);
+    const pending = await readConfigurationApplyResultArtifact(resultPath);
+    assert.equal(pending.operation.status, "PENDING");
+    client.configurationAsCode.getIntegrationConfigurationApplyOperation = async ({ operationId }) => {
+      polls++;
+      assert.equal(operationId, pending.operation.operationId);
+      return applyResponse("SUCCEEDED");
+    };
+    const resumed = await waitForConfigurationApply({ client, result: pending, onResult });
+    assert.equal(resumed.operation.status, "SUCCEEDED");
+    assert.equal((await readConfigurationApplyResultArtifact(resultPath)).operation.status, "SUCCEEDED");
+    assert.equal(applies, 1);
+    assert.equal(polls, 2);
+    assert.deepEqual(observed, ["PENDING", "SUCCEEDED"]);
+  } finally {
+    await rm(temporary, { recursive: true, force: true });
+  }
+});
+
+for (const phase of ["retry backoff", "response body"]) {
+  test(`polling deadline cancels the real SDK during ${phase}`, { timeout: 2000 }, async () => {
+    const stored = configurationApplyResultArtifact(configurationPlanArtifact(planResponse()), applyResponse("PENDING"), false);
+    let calls = 0;
+    let signal;
+    const client = new ModernEdiClient({
+      apiKey: "synthetic-runner-key", baseUrl: "https://runner.example.test",
+      retry: { maxAttempts: 3, baseDelayMs: 10_000 },
+      fetch: async (_url, init) => {
+        calls++;
+        signal = init.signal;
+        if (phase === "retry backoff") return new Response(null, { status: 503 });
+        return new Response(new ReadableStream({
+          start(controller) {
+            controller.enqueue(new TextEncoder().encode('{"success":'));
+            signal.addEventListener("abort", () => controller.error(signal.reason), { once: true });
+          },
+        }), { headers: { "Content-Type": "application/json" } });
+      },
+    });
+
+    await assert.rejects(waitForConfigurationApply({ client, result: stored, timeoutMs: 25 }),
+      error => error.code === "APPLY_POLL_TIMEOUT" && error.exitCode === 4);
+    assert.equal(calls, 1);
+    assert.equal(signal.aborted, true);
+    assert.equal(stored.operation.status, "PENDING");
+  });
+}
+
 test("wait authenticates a stored SUCCEEDED result before reporting success", async () => {
   const reviewed = configurationPlanArtifact(planResponse());
   const stored = configurationApplyResultArtifact(
@@ -347,4 +503,23 @@ test("wait authenticates a stored SUCCEEDED result before reporting success", as
 
   assert.equal(getCalls, 1);
   assert.equal(result.operation.status, "SUCCEEDED");
+});
+
+test("finished and failed reads both clear their deadline timer", { timeout: 2000 }, async () => {
+  const stored = configurationApplyResultArtifact(configurationPlanArtifact(planResponse()), applyResponse("PENDING"), false);
+  for (const failure of [null, new Error("Synthetic API failure")]) {
+    let signal;
+    const client = { configurationAsCode: {
+      getIntegrationConfigurationApplyOperation: async (_input, options) => {
+        signal = options.signal;
+        if (failure) throw failure;
+        return applyResponse("SUCCEEDED");
+      },
+    } };
+    const waiting = waitForConfigurationApply({ client, result: stored, timeoutMs: 25 });
+    if (failure) await assert.rejects(waiting, error => error === failure);
+    else assert.equal((await waiting).operation.status, "SUCCEEDED");
+    await new Promise(resolve => setTimeout(resolve, 40));
+    assert.equal(signal.aborted, false, "Completed reads must not leave a deadline timer running");
+  }
 });

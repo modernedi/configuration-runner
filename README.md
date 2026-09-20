@@ -9,12 +9,12 @@ The runner works in any CI system that can run Node.js 20 or later. Vendor-speci
 Use an exact package version in protected automation:
 
 ```sh
-npx --yes @modernedi/configuration-runner@0.5.3 plan \
+npx --yes @modernedi/configuration-runner@0.5.4 plan \
   --bundle ./modernedi \
   --plan-out ./artifacts/plan.json
 ```
 
-The package depends on the exact `@modernedi/sdk@0.9.0` API contract, including shared public certificate files, scenario bindings for Production or Test traffic, optional generated-X12 checks for saved mapping cases, and contract-aware safe retries.
+The package depends on the exact `@modernedi/sdk@0.9.1` API contract, including shared public certificate files, scenario bindings for Production or Test traffic, optional generated-X12 checks for saved mapping cases, and contract-aware safe retries with replayable Request bodies and cancellation.
 
 Set these environment variables through your CI secret store:
 
@@ -44,7 +44,7 @@ ModernEDI remains authoritative for document shape, mapping compilation, semanti
 Run with a read-capable key on a proposed bundle:
 
 ```sh
-npx --yes @modernedi/configuration-runner@0.5.3 plan \
+npx --yes @modernedi/configuration-runner@0.5.4 plan \
   --bundle ./modernedi \
   --plan-out ./artifacts/plan.json
 ```
@@ -62,7 +62,7 @@ An outgoing case can set `validateX12: true` to check its generated document aga
 After reviewing a plan, execute its saved cases on ModernEDI's server:
 
 ```sh
-npx --yes @modernedi/configuration-runner@0.5.3 verify \
+npx --yes @modernedi/configuration-runner@0.5.4 verify \
   --bundle ./modernedi \
   --reviewed-plan ./artifacts/plan.json \
   --request-id 43c4a774-911c-47b6-a9f5-5bf2cde68157 \
@@ -86,7 +86,7 @@ Download the reviewed `plan.json`, check out the exact protected revision, and s
 ```sh
 export MODERNEDI_IDEMPOTENCY_KEY="production:configuration:build-1842"
 
-npx --yes @modernedi/configuration-runner@0.5.3 apply-reviewed \
+npx --yes @modernedi/configuration-runner@0.5.4 apply-reviewed \
   --bundle ./modernedi \
   --reviewed-plan ./artifacts/plan.json \
   --result-out ./artifacts/result.json \
@@ -103,12 +103,14 @@ It then submits the exact desired files with the fresh plan's exact `If-Match` E
 
 As soon as the server accepts the apply, `result.json` is written atomically with the `PENDING` operation. It is updated after every poll and on `SUCCEEDED`. If polling times out, the database transaction may already be committed; do not submit a new apply merely to resume observation.
 
+`--timeout-seconds` is one polling budget, shared by status requests (including SDK retries and response-body reads) and the delays between them. For `apply-reviewed`, it starts after the accepted apply result is saved; it does not limit the earlier re-plan or apply submission. For `wait`, it includes the first status lookup. At the deadline the runner aborts the outstanding read, exits with code `4`, and keeps the last saved result. This stops observation only: it does not cancel the server operation, roll back configuration, or submit another apply.
+
 ## Resume a pending operation
 
 Use the stored result artifact and a read-capable key:
 
 ```sh
-npx --yes @modernedi/configuration-runner@0.5.3 wait \
+npx --yes @modernedi/configuration-runner@0.5.4 wait \
   --result ./artifacts/result.json \
   --timeout-seconds 900
 ```
