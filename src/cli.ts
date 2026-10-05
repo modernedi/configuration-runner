@@ -125,7 +125,7 @@ export async function runCli(
   if (command.mode === "verify") {
     const report = await verifyReviewedConfiguration({ client, request: bundle.request, reviewedPlan: reviewed, requestId: command.requestId });
     await writeArtifact(command.artifactPath, ConfigurationVerificationResponseToJSON(report));
-    stdout(`Verification: ${report.run.status} (${report.run.freshness})\nRun: ${report.run.runId}\nCases completed: ${report.run.cases.length}/${report.run.identity.caseCount}\nMappings without cases: ${report.run.identity.untestedMappingCount}\nReport: ${command.artifactPath}\n`);
+    stdout(`Verification: ${report.run.status} (${report.run.freshness})\nRun: ${report.run.runId}\nCases completed: ${report.run.cases.length}/${report.run.identity.caseCount}\nMappings without cases: ${report.run.identity.untestedMappingCount}\nOffline conversation bindings tested: ${report.run.identity.scenarioBindings.length}\nScenario bindings without cases: ${report.run.identity.untestedScenarioBindingCount ?? 'not recorded'}\nNo EDI sent; offline results do not prove delivery or partner acceptance.\nReport: ${command.artifactPath}\n`);
     return report.run.status === "PASSED" && report.run.freshness === "CURRENT" ? 0 : 5;
   }
   if (idempotencyKey === undefined) {

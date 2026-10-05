@@ -30,7 +30,9 @@
         }
       ],
       "caseCount": 1,
-      "untestedMappingCount": 2
+      "untestedMappingCount": 2,
+      "scenarioBindings": [],
+      "untestedScenarioBindingCount": 0
     },
     "cases": [
       {

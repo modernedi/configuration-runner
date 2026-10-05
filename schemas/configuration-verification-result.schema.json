@@ -41,7 +41,7 @@
         },
         "status": {
           "type": "string",
-          "description": "PASSED covers only selected saved cases; it does not establish delivery, partner acceptance or scenario success.",
+          "description": "PASSED covers the selected mapping and offline conversation expectations; it does not establish delivery, partner acceptance or a successful live scenario run.",
           "enum": [
             "RUNNING",
             "PASSED",
@@ -78,7 +78,14 @@
           "type": "array",
           "maxItems": 100,
           "items": {
-            "$ref": "#/$defs/ConfigurationVerificationCaseResult"
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ConfigurationVerificationCaseResult"
+              },
+              {
+                "$ref": "#/$defs/ConfigurationScenarioCaseResult"
+              }
+            ]
           },
           "description": "Completed case outcomes. Incomplete suites cannot pass."
         },
@@ -121,7 +128,9 @@
         "baseSnapshotEtag",
         "evaluatorSha256",
         "mappings",
+        "scenarioBindings",
         "untestedMappingCount",
+        "untestedScenarioBindingCount",
         "caseCount"
       ],
       "properties": {
@@ -140,17 +149,33 @@
         },
         "mappings": {
           "type": "array",
-          "minItems": 1,
+          "minItems": 0,
           "maxItems": 25,
           "items": {
             "$ref": "#/$defs/ConfigurationVerificationMapping"
           },
           "description": "All desired mappings containing saved cases, sorted by resource key."
         },
+        "scenarioBindings": {
+          "type": "array",
+          "maxItems": 25,
+          "items": {
+            "$ref": "#/$defs/ConfigurationVerificationScenarioBinding"
+          },
+          "description": "Desired bindings with saved offline conversation tests. These tests use actual mapping-case documents and the scenario interpreter, without live delivery or acknowledgement evidence."
+        },
         "untestedMappingCount": {
           "type": "integer",
           "minimum": 0,
           "description": "Desired mappings without saved cases. A passing suite does not cover these mappings."
+        },
+        "untestedScenarioBindingCount": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "description": "Desired scenario bindings without saved conversation tests. Null for historical runs that did not measure conversation coverage."
         },
         "caseCount": {
           "type": "integer",
@@ -239,6 +264,69 @@
         }
       }
     },
+    "ConfigurationVerificationScenarioBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scenarioBindingResourceKey",
+        "definitionSha256",
+        "bindingSha256",
+        "authoritySha256",
+        "casesSha256",
+        "caseCount",
+        "steps"
+      ],
+      "properties": {
+        "scenarioBindingResourceKey": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Stable portable ScenarioBinding resource key."
+        },
+        "definitionSha256": {
+          "$ref": "#/$defs/ConfigurationSha256"
+        },
+        "bindingSha256": {
+          "$ref": "#/$defs/ConfigurationSha256"
+        },
+        "authoritySha256": {
+          "$ref": "#/$defs/ConfigurationSha256"
+        },
+        "casesSha256": {
+          "$ref": "#/$defs/ConfigurationSha256"
+        },
+        "caseCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "description": "Number of saved conversation tests selected from this binding."
+        },
+        "steps": {
+          "type": "array",
+          "maxItems": 500,
+          "items": {
+            "$ref": "#/$defs/ConfigurationVerificationScenarioStep"
+          },
+          "description": "Frozen X12 grammar for every bound step, including steps absent from an individual test."
+        }
+      }
+    },
+    "ConfigurationVerificationScenarioStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stepId",
+        "syntaxTree"
+      ],
+      "properties": {
+        "stepId": {
+          "type": "string",
+          "description": "Step in the scenario definition."
+        },
+        "syntaxTree": {
+          "$ref": "#/$defs/ConfigurationVerificationSyntaxTree"
+        }
+      }
+    },
     "ConfigurationVerificationCaseResult": {
       "type": "object",
       "additionalProperties": false,
@@ -297,6 +385,146 @@
             "ERROR"
           ],
           "description": "Present only when the saved outgoing case requested validateX12. Uses the frozen mapping syntax tree and the same document preparation and validation as outgoing preview/send. A FAILED case may have matching expected/actual hashes when X12 validation failed."
+        }
+      }
+    },
+    "ConfigurationScenarioCaseResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scenarioBindingResourceKey",
+        "id",
+        "name",
+        "mode",
+        "caseSha256",
+        "expectedOutcome",
+        "status",
+        "actualOutcome",
+        "actualChecksSha256",
+        "diagnosticCode",
+        "checkCount",
+        "checks"
+      ],
+      "properties": {
+        "scenarioBindingResourceKey": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Binding owning this saved conversation test."
+        },
+        "id": {
+          "type": "string",
+          "description": "Portable case ID."
+        },
+        "name": {
+          "type": "string",
+          "description": "Portable case display name."
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "OFFLINE"
+          ],
+          "description": "No live run, EDI send, transport receipt, or partner acknowledgement is created."
+        },
+        "caseSha256": {
+          "$ref": "#/$defs/ConfigurationSha256"
+        },
+        "expectedOutcome": {
+          "type": "string",
+          "enum": [
+            "PASSED",
+            "FAILED",
+            "PENDING",
+            "INCONCLUSIVE"
+          ],
+          "description": "Expected interpreter outcome. A negative test can pass by reproducing its named failing checks."
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "PASSED",
+            "FAILED",
+            "ERROR"
+          ],
+          "description": "Whether actual interpreter results match all saved expectations. Mapping or document evaluation errors never satisfy negative expectations."
+        },
+        "actualOutcome": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "PASSED",
+            "FAILED",
+            "PENDING",
+            "INCONCLUSIVE",
+            null
+          ],
+          "description": "Actual offline interpreter outcome; null when evaluation could not run."
+        },
+        "actualChecksSha256": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "Hash of all actual check IDs, outcomes, and codes; null on evaluation errors."
+        },
+        "diagnosticCode": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "EXPECTED_RESULT_MISMATCH",
+            "MAPPING_CASE_FAILED",
+            "DOCUMENT_EVALUATION_FAILED",
+            null
+          ],
+          "description": "Safe diagnostic category, or null when the saved test passed."
+        },
+        "checkCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total evaluated interpreter checks, including checks omitted from the bounded preview."
+        },
+        "checks": {
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "$ref": "#/$defs/ConfigurationScenarioCaseCheck"
+          },
+          "description": "Bounded preview, non-passing checks first. Contains no raw inputs, outputs, fact values, or engine error text."
+        }
+      }
+    },
+    "ConfigurationScenarioCaseCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "outcome",
+        "code"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 1024,
+          "description": "Stable interpreter check ID, such as assertion:invoiceCurrencyMatches."
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "PASSED",
+            "FAILED",
+            "PENDING",
+            "INCONCLUSIVE"
+          ],
+          "description": "Actual outcome of the interpreter check, not the saved test's status."
+        },
+        "code": {
+          "type": "string",
+          "description": "Interpreter result code, without fact values or document contents."
         }
       }
     }

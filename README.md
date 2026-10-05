@@ -9,12 +9,12 @@ The runner works in any CI system that can run Node.js 20 or later. Vendor-speci
 Use an exact package version in protected automation:
 
 ```sh
-npx --yes @modernedi/configuration-runner@0.5.4 plan \
+npx --yes @modernedi/configuration-runner@0.6.0 plan \
   --bundle ./modernedi \
   --plan-out ./artifacts/plan.json
 ```
 
-The package depends on the exact `@modernedi/sdk@0.9.1` API contract, including shared public certificate files, scenario bindings for Production or Test traffic, optional generated-X12 checks for saved mapping cases, and contract-aware safe retries with replayable Request bodies and cancellation.
+The package depends on the exact `@modernedi/sdk@0.10.0` API contract, including shared public certificate files, scenario bindings for Production or Test traffic, optional generated-X12 checks for saved mapping cases, and contract-aware safe retries with replayable Request bodies and cancellation.
 
 Set these environment variables through your CI secret store:
 
@@ -44,7 +44,7 @@ ModernEDI remains authoritative for document shape, mapping compilation, semanti
 Run with a read-capable key on a proposed bundle:
 
 ```sh
-npx --yes @modernedi/configuration-runner@0.5.4 plan \
+npx --yes @modernedi/configuration-runner@0.6.0 plan \
   --bundle ./modernedi \
   --plan-out ./artifacts/plan.json
 ```
@@ -53,31 +53,33 @@ The command prints a human summary and writes deterministic `plan.json`. Preserv
 
 `plan.json` contains both identities that later authorize deployment and the complete wire plan reviewers saw. Editing the embedded operations or diagnostics without changing the top-level hashes does not authorize an apply: protected apply compares the entire freshly generated wire plan exactly.
 
-## Optionally verify saved mapping cases
+## Optionally verify saved mapping and conversation cases
 
 Mappings can carry optional `spec.regressionCases`; author them in the browser or edit the same portable JSON. A partner and mapping remain sufficient without tests, scenarios, or automation.
+
+Scenario bindings can also carry `spec.regressionCases` (inside `spec.source` in a portable resource). Each observation references a saved case on its bound map; the server executes the real map and checks extracted facts with the existing scenario interpreter. See [saved conversation tests](https://www.modernedi.com/docs/scenarios/saved-conversation-tests) for timing, collection closure, named negative expectations, and tested supplier/carrier examples. These are offline tests, not live scenario runs or adapter dispatch.
 
 An outgoing case can set `validateX12: true` to check its generated document against the mapping's selected X12 version and document type, as well as matching the expected text. Leave it unset for intentional fragments. The same setting travels through browser-authored cases, Git, and this runner. The report includes a separate `x12ValidationStatus` when the check was requested; matching expected text alone cannot turn a failed X12 check into a pass.
 
 After reviewing a plan, execute its saved cases on ModernEDI's server:
 
 ```sh
-npx --yes @modernedi/configuration-runner@0.5.4 verify \
+npx --yes @modernedi/configuration-runner@0.6.0 verify \
   --bundle ./modernedi \
   --reviewed-plan ./artifacts/plan.json \
   --request-id 43c4a774-911c-47b6-a9f5-5bf2cde68157 \
   --result-out ./artifacts/verification.json
 ```
 
-Generate a UUID for each new verification and retain it for retries; do not reuse the example UUID across builds. Verification needs `configuration:read`, re-plans before execution, and never applies configuration. The report identifies the exact desired bundle, plan, baseline, evaluator, and grammar for each tested mapping. Mappings without saved cases are counted explicitly.
+Generate a UUID for each new verification and retain it for retries; do not reuse the example UUID across builds. Verification needs `configuration:read`, re-plans before execution, and never applies configuration. The report identifies the exact desired bundle, plan, baseline, evaluator, mapping cases, scenario definitions/bindings, and grammars. Mappings and bindings without saved cases are counted explicitly. Conversation case results use `scenarioBindingResourceKey` and `mode: "OFFLINE"`; a passing negative test can have `actualOutcome: "FAILED"` because it matched the named expected failure.
 
-The suite supports 25 tested mappings and 100 cases, with a 30-second total deadline. It shares browser verification capacity: one active run per workspace and 30 starts per hour. Results retain hashes and outcomes, not raw input/output. The latest 200 runs are retained for up to 90 days.
+The suite supports 25 tested mappings, 25 tested bindings, and 100 combined cases, with a 30-second total deadline. Each binding supports 10 cases, 20 observations per case, and 64 KiB of case JSON. It shares browser verification capacity: one active run per workspace and 30 starts per hour. Results retain hashes and outcomes, not raw input/output or extracted facts. The latest 200 runs are retained for up to 90 days.
 
 `verification.json` uses the server response contract and the packaged `schemas/configuration-verification-result.schema.json`, generated from OpenAPI. Exit `0` means the result is `PASSED` and `CURRENT`; exit `5` means otherwise, including incomplete execution. A lost response does not mean cancellation: use the SDK or `GET /v1/configuration/verification-runs/verify-{requestId}` to inspect the persisted result. The initiating key can cancel using `POST /v1/configuration/verification-runs/{runId}/cancel`.
 
 To explicitly require the result during apply, add `--verification-run-id <runId>` to `apply-reviewed`. The server checks its own stored, current passing result against this exact plan and links it to Change history. It does not trust statuses edited in a downloaded report. Omit the flag to apply normally without a test gate. A protected write-capable key may apply a run produced by a read-capable key in the same workspace.
 
-A pass proves exact output and any requested X12 validation for the selected saved cases in the backend evaluator. It does not establish live runtime activation, AS2 delivery, partner acceptance, or scenario success.
+A pass proves the selected mapping outputs and offline conversation expectations in the backend evaluator. Outgoing documents used by a conversation are always X12-validated. It does not establish live runtime activation, AS2 delivery, partner acceptance, or a successful live scenario run. Offline tests do not invent assurance evidence or reply lineage.
 
 ## Apply after protected merge
 
@@ -86,7 +88,7 @@ Download the reviewed `plan.json`, check out the exact protected revision, and s
 ```sh
 export MODERNEDI_IDEMPOTENCY_KEY="production:configuration:build-1842"
 
-npx --yes @modernedi/configuration-runner@0.5.4 apply-reviewed \
+npx --yes @modernedi/configuration-runner@0.6.0 apply-reviewed \
   --bundle ./modernedi \
   --reviewed-plan ./artifacts/plan.json \
   --result-out ./artifacts/result.json \
@@ -110,7 +112,7 @@ As soon as the server accepts the apply, `result.json` is written atomically wit
 Use the stored result artifact and a read-capable key:
 
 ```sh
-npx --yes @modernedi/configuration-runner@0.5.4 wait \
+npx --yes @modernedi/configuration-runner@0.6.0 wait \
   --result ./artifacts/result.json \
   --timeout-seconds 900
 ```
