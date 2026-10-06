@@ -479,9 +479,11 @@
             "EXPECTED_RESULT_MISMATCH",
             "MAPPING_CASE_FAILED",
             "DOCUMENT_EVALUATION_FAILED",
+            "FACT_EVALUATION_TIMEOUT",
+            "FACT_EVALUATION_BUSY_OR_LIMIT",
             null
           ],
-          "description": "Safe diagnostic category, or null when the saved test passed."
+          "description": "Safe diagnostic category, or null when the saved test passed. Fact timeouts and busy/limit errors leave the conversation unevaluated and never satisfy negative expectations. Retry verification; repeated failures may require simplifying the fact expression or contacting support. Raw documents, fact values, and Mapper errors are not included."
         },
         "checkCount": {
           "type": "integer",
